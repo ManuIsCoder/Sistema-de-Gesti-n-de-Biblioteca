@@ -81,4 +81,38 @@ public class ReporteService
         }
     }
 
+
+    public void PrestamosVencidos()
+    {
+        Console.WriteLine("=== PRÉSTAMOS VENCIDOS ===\n");
+
+        DateTime hoy = DateTime.Today;
+
+        var vencidos = _context.Prestamos
+            .Include(p => p.Socio)
+            .Include(p => p.Libro)
+            .Where(p => p.FechaVencimiento < hoy && p.FechaDevolucion == null)
+            .OrderBy(p => p.FechaVencimiento)
+            .ToList();
+
+        if (!vencidos.Any())
+        {
+            Console.WriteLine("No hay préstamos vencidos.");
+            return;
+        }
+
+        foreach (var p in vencidos)
+        {
+            int diasDemora = (hoy - p.FechaVencimiento).Days;
+            Console.WriteLine($"  Socio: {p.Socio.Nombre} {p.Socio.Apellido} (Nro {p.SocioId})");
+            Console.WriteLine($"  Libro: {p.Libro.Titulo}");
+            Console.WriteLine($"  Venció: {p.FechaVencimiento:dd/MM/yyyy} — {diasDemora} día(s) de demora");
+            Console.WriteLine();
+        }
+
+        Console.WriteLine($"Total vencidos: {vencidos.Count}");
+    }
+
+
+
 }
