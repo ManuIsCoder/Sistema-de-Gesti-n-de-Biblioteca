@@ -114,5 +114,59 @@ public class ReporteService
     }
 
 
+    public void DisponibilidadLibro()
+    {
+        Console.WriteLine("=== DISPONIBILIDAD DE UN LIBRO ===\n");
+
+        Console.Write("Ingresá ISBN o título del libro: ");
+        string busqueda = Console.ReadLine()?.Trim() ?? "";
+
+        var libro = _context.Libros
+            .FirstOrDefault(l => l.ISBN == busqueda ||
+                                 l.Titulo.ToLower().Contains(busqueda.ToLower()));
+
+        if (libro == null)
+        {
+            Console.WriteLine("Libro no encontrado.");
+            return;
+        }
+
+
+        int copiasTomadas = _context.Prestamos
+            .Count(p => p.LibroISBN == libro.ISBN &&
+                        (p.EstadoPrestamo.Nombre == "Activo" || p.EstadoPrestamo.Nombre == "Vencido"));
+
+        int copiasDisponibles = libro.CantidadCopias - copiasTomadas;
+
+
+        var reservasPendientes = _context.Reservas
+            .Include(r => r.Socio)
+            .Where(r => r.LibroISBN == libro.ISBN && r.EstadoReserva.Nombre == "Pendiente")
+            .OrderBy(r => r.FechaReserva)
+            .ToList();
+
+        Console.WriteLine($"\n  Título:   {libro.Titulo}");
+        Console.WriteLine($"  Autor:    {libro.Autor}");
+        Console.WriteLine($"  ISBN:     {libro.ISBN}");
+        Console.WriteLine($"  Copias totales:     {libro.CantidadCopias}");
+        Console.WriteLine($"  Copias prestadas:   {copiasTomadas}");
+        Console.WriteLine($"  Copias disponibles: {copiasDisponibles}");
+
+        if (reservasPendientes.Any())
+        {
+            Console.WriteLine($"\n  Reservas pendientes ({reservasPendientes.Count}):");
+            foreach (var r in reservasPendientes)
+            {
+                Console.WriteLine($"    • {r.Socio.Nombre} {r.Socio.Apellido} — reservó el {r.FechaReserva:dd/MM/yyyy}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("\n  Sin reservas pendientes.");
+        }
+
+        Console.WriteLine();
+    }
+
 
 }
