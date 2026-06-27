@@ -169,4 +169,74 @@ public class ReporteService
     }
 
 
+    public void HistorialSocio()
+    {
+        Console.WriteLine("=== HISTORIAL DE UN SOCIO ===\n");
+
+        Console.Write("Ingresá el número de socio: ");
+        if (!int.TryParse(Console.ReadLine(), out int nroSocio))
+        {
+            Console.WriteLine("Número de socio inválido.");
+            return;
+        }
+
+        var socio = _context.Socios
+            .Include(s => s.TipoSocio)
+            .FirstOrDefault(s => s.NroSocio == nroSocio);
+
+        if (socio == null)
+        {
+            Console.WriteLine("Socio no encontrado.");
+            return;
+        }
+
+        Console.WriteLine($"\nSocio: {socio.Nombre} {socio.Apellido} — Tipo: {socio.TipoSocio.Nombre}");
+
+        var prestamos = _context.Prestamos
+            .Include(p => p.Libro)
+            .Include(p => p.EstadoPrestamo)
+            .Where(p => p.SocioId == nroSocio)
+            .OrderByDescending(p => p.FechaPrestamo)
+            .ToList();
+
+        Console.WriteLine($"\n--- Préstamos ({prestamos.Count}) ---");
+        if (!prestamos.Any())
+        {
+            Console.WriteLine("  Sin préstamos.");
+        }
+        else
+        {
+            foreach (var p in prestamos)
+            {
+                string devolucion = p.FechaDevolucion.HasValue
+                    ? $"Devuelto: {p.FechaDevolucion:dd/MM/yyyy}"
+                    : $"Vence: {p.FechaVencimiento:dd/MM/yyyy}";
+                string multa = p.Multa.HasValue ? $" | Multa: ${p.Multa:F2}" : "";
+                Console.WriteLine($"  • [{p.EstadoPrestamo.Nombre}] {p.Libro.Titulo}");
+                Console.WriteLine($"    Prestado: {p.FechaPrestamo:dd/MM/yyyy} — {devolucion}{multa}");
+            }
+        }
+
+        var reservas = _context.Reservas
+            .Include(r => r.Libro)
+            .Include(r => r.EstadoReserva)
+            .Where(r => r.SocioId == nroSocio)
+            .OrderByDescending(r => r.FechaReserva)
+            .ToList();
+
+        Console.WriteLine($"\n--- Reservas ({reservas.Count}) ---");
+        if (!reservas.Any())
+        {
+            Console.WriteLine("  Sin reservas.");
+        }
+        else
+        {
+            foreach (var r in reservas)
+            {
+                Console.WriteLine($"  • [{r.EstadoReserva.Nombre}] {r.Libro.Titulo} — {r.FechaReserva:dd/MM/yyyy}");
+            }
+        }
+
+        Console.WriteLine();
+    }
 }
