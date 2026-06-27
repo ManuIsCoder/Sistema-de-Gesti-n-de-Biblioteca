@@ -1,4 +1,4 @@
 # SistemaBiblioteca
 
-Geronimo Chavarri
-Manuel Ferrer Petit
+-Geronimo Chavarri
+-Manuel Ferrer Petit
